@@ -11,26 +11,19 @@ library(rjson)
 #===========================================================================
 function(input, output) {
   #==== Get UI.R's input ====
-  Ui_input <- reactive({ ###### Check 1 ######
-   return( list( 
-     'PassengerId' = "1",
-     'Survived' = "1",
-     'Pclass' = input$PassengerClass,
-     'Name' = "",
-     'Sex' = input$Gender ,
-     'Age' = as.character(input$Age),
-     'SibSp' = as.character(input$SiblingSpouse) ,
-     'Parch' = as.character(input$ParentChild),
-     'Ticket' = "",
-     'Fare' = "1",
-     'Cabin' = "",
-     'Embarked' = input$PortEmbarkation
-     
-     ) )
-  })
   
+  Ui_input <- reactive({ ###### Check 1 ######
+    return( list( "age" = input$age,
+                  "marital" = as.character(input$marital) ,
+                  "housing" = as.character(input$housing) ,
+                  "loan" = as.character(input$loan),
+                  "campaign" = input$campaign,
+                  'poutcome' = as.character(input$poutcome)
+    ) )
+  })
+  #print(Ui_input)
   #==== Output : Prediction ====   
-  output$result_plot <- renderImage({
+  output$result_text <- renderText({
     #---- Connect to Azure ML workspace ----  
     options(RCurlOptions = list(cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl")))
     # Accept SSL certificates issued by public Certificate Authorities
@@ -39,9 +32,9 @@ function(input, output) {
     hdr = basicHeaderGatherer()
     
     #---- Put input_data to Azure ML workspace ----
-    req = list(
+    req =  list(
       Inputs = list(
-        "input1" = list(
+        "input1"= list(
           Ui_input()
         )
       ),
@@ -49,12 +42,13 @@ function(input, output) {
     )
     
     #---- Web service : API key ----
+    
     body = enc2utf8(toJSON(req))
-    api_key = "I62mqmqZjyrLmhDz+4oIBaL8zWQ8lTgafqc7BmuitXJzsvbabJ7fosPqxe1q6CTzR7ZFMIVX+sLrgxM0KitlUA=="  ###### Check 2 ######
+    api_key = "brIDPvSo17Qowr96ZsRPGh3AK4gE1q045TQDoM6+BR+slImPtD2wKUvxcTP6pNsHDkSqKVDyL2Kbjl2RU9Ph4A==" # Replace this with the API key for the web service
     authz_hdr = paste('Bearer', api_key, sep=' ')
     
     h$reset()
-    curlPerform(url = "https://ussouthcentral.services.azureml.net/workspaces/32f145a079c7420aa12b37e1a96718ee/services/133b02900d1d49258e6419424998c2c1/execute?api-version=2.0&format=swagger",   ###### Check 3 ######
+    curlPerform(url = "https://ussouthcentral.services.azureml.net/workspaces/ae5e6b1aa49847228498327c4960d383/services/821ada129ca449078180ed909082f219/execute?api-version=2.0&format=swagger",
                 httpheader=c('Content-Type' = "application/json", 'Authorization' = authz_hdr),
                 postfields=body,
                 writefunction = h$update,
@@ -63,20 +57,9 @@ function(input, output) {
     )
     
     #---- Get Result  ----
-    #result = fromJSON( h$value() )$Results$output2[[1]]$PredictedSurvived   ###### Check 4 ######
-    result = fromJSON(h$value())$Results$output1[[1]]$predict
-    if ( result == "1") {
-      return( list(
-        src = "www/survived.png",
-        height = 480, width = 700,
-        alt = "Survived"
-      ))
-    }else if ( result == "0") {
-      return(list(
-        src = "www/deceased.png",
-        height = 480, width = 700,
-        alt = "Deceased"
-      ))
-    }
-  }, deleteFile = FALSE)
+    
+    result = fromJSON( h$value() )$Results$output1[[1]]$Predicted
+    
+    
+  })
 }

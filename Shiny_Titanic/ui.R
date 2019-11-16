@@ -47,7 +47,7 @@ shinyUI(fluidPage(
       
       numericInput( inputId = "Age", 
                     label = "Age : ", 
-                    min = age_min, max = age_max, value =age_max, step = 0.5),
+                    min = age_min, max = age_max, value =age_max, step = 1),
       
       numericInput( inputId = "SiblingSpouse", 
                     label = "Sibling Spouse : ", 
